@@ -1,0 +1,63 @@
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_iris
+from sklearn.metrics import accuracy_score
+
+import pandas as pd
+df=pd.read_csv("/content/diabetes.csv")
+
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn import metrics 
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import KFold
+
+cols_clean=['Glucose','BloodPressure','SkinThickness','Insulin','BMI']
+for(col) in cols_clean:
+  df[col]=df[col].replace(0,np.nan)
+  mean=int(df[col].mean(skipna=True))
+  df[col]=df[col].replace(np.nan,mean)
+data1=df
+data1.head().style.highlight_max(color="lightblue").highlight_min(color="red")
+
+#for the purpose of simplicity and analysing the most relevent data ,we will select three features of glucose ,insuline ,and BMI
+q_col=['Glucose',"Insulin",'BMI','Outcome']
+df=data1[q_col]
+df.head(2)
+
+#lets Split the data into training and testing
+Split=0.75
+total_len=len(df)
+Split_df=int(total_len*Split)
+train_df=df[:Split_df]
+test_df=df[Split_df:]
+train_X=train_df.drop('Outcome',axis=1)
+train_y=train_df['Outcome']
+test_X=test_df.drop('Outcome',axis=1)
+test_y=test_df['Outcome']
+
+a=len(train_X)
+b=len(test_X)
+print('Training data =',a,'\n','Testing data=',b,'\n','total data length= ',a+b)
+
+# let's test it using KNN  classifier with a loop to cover as much n-neightbors as possible
+def knn(x_train, y_train, x_test, y_test,n):
+    n_range = range(1, n)
+    results = []
+    for n in n_range:
+        knn = KNeighborsClassifier(n_neighbors=n)
+        knn.fit(x_train, y_train)
+        #Predict the response for test dataset
+        predict_y = knn.predict(x_test)
+        accuracy = metrics.accuracy_score(y_test, predict_y)
+        #matrix = confusion_matrix(y_test,predict_y)
+        #seaborn_matrix = sns.heatmap(matrix, annot = True, cmap="Blues",cbar=True)
+        results.append(accuracy)
+    return results
+
+n= 500
+output = knn(train_X,train_y,test_X,test_y,n)
+n_range = range(1, n)
+plt.plot(n_range, output)
